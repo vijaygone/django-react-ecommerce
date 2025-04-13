@@ -91,53 +91,62 @@
     - debug:
         msg: "Yarn version: {{ yarn_version.stdout }}"
 
+    - name: Remove existing application directory
+      file:
+        path: "/home/vagrant/app"
+        state: absent
+
     - name: Clone from GitHub project application code to ~/app
       git:
         repo: "https://{{ lookup('env', 'GITHUB_TOKEN') }}@github.com/vijaygone/django-react-ecommerce.git"
-        dest: "~/app"
+        dest: "/home/vagrant/app"
         version: "master"  # Replace with the desired branch or tag
 
-    # Check if node_modules directory exists
-    # - name: Check if node_modules directory exists
-    #   stat:
-    #     path: /app/node_modules
-    #   register: node_modules_stat
+    - name: Ensure vagrant user owns the app directory
+      file:
+        path: "/home/vagrant/app"
+        state: directory
+        owner: vagrant
+        group: vagrant
+        recurse: yes
+
+    # Remove existing node_modules directory
+    - name: Remove existing node_modules directory
+      file:
+        path: "/home/vagrant/app/node_modules"
+        state: absent
+
+    # Set Yarn network timeout configuration
+    - name: Set Yarn network timeout
+      command: yarn config set network-timeout 600000
+      become: yes
+      become_user: vagrant
+
+    # Set Yarn registry configuration
+    - name: Set Yarn registry to npmjs.org
+      command: yarn config set registry https://registry.npmjs.org/
+      become: yes
+      become_user: vagrant
 
     # Install application dependencies using Yarn
-    # - name: Install application dependencies
-    #   command: yarn install --production
-    #   args:
-    #     chdir: /app
-    #   when: not node_modules_stat.stat.exists
-
-    # Check if dist directory exists
-    # - name: Check if dist directory exists
-    #   stat:
-    #     path: /app/dist
-    #   register: dist_stat
+    - name: Install application dependencies using Yarn
+      command: yarn install --production
+      args:
+        chdir: /home/vagrant/app
+      become: yes
+      become_user: vagrant
 
     # Build the application using Yarn
-    # - name: Build the application
-    #   command: yarn build
-    #   args:
-    #     chdir: /app
-    #   when: not dist_stat.stat.exists
+    - name: Build the application
+      command: yarn build
+      args:
+        chdir: /home/vagrant/app
+      become: yes
+      become_user: vagrant
 
-    # Build the Docker image for the frontend
-    # - name: Build Docker image for frontend
-    #   command: docker build -t frontend-app .
-    #   args:
-    #     chdir: /app
-    #   when: not dist_stat.stat.exists
-
-    # # Run the frontend container
-    # - name: Run frontend container
-    #   docker_container:
-    #     name: frontend-container
-    #     image: frontend-app
-    #     state: started
-    #     ports:
-    #       - "3000:80"
-    #     volumes:
-    #       - /app:/app
-    #     restart_policy: always
+    # Run Docker Compose to start the services
+    - name: Start services using Docker Compose
+      command: docker-compose up -d
+      args:
+        chdir: /home/vagrant/app
+      become: yes

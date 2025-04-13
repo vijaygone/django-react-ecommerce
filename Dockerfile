@@ -1,8 +1,8 @@
 # Use an official Nginx image to serve the static files
-FROM nginx:latest-alpine
+FROM public.ecr.aws/nginx/nginx:alpine-slim
 
 # Copy the production build from the VM to the container
-COPY dist /usr/share/nginx/html
+COPY build /usr/share/nginx/html
 
 # Expose the port Nginx runs on
 EXPOSE 80
