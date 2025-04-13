@@ -1,0 +1,146 @@
+---
+- name: Install Docker, Docker Compose, Node.js, and Yarn
+  hosts: all
+  become: yes
+
+  tasks:
+    # Update the package manager
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+      when: ansible_facts['pkg_mgr'] == 'apt'
+
+    # Copy the Docker installation script to the VM
+    - name: Copy Docker installation script
+      copy:
+        src: docker_install.sh
+        dest: /tmp/docker_install.sh
+        mode: '0755'
+
+    # Run the Docker installation script
+    - name: Run Docker installation script
+      command: /tmp/docker_install.sh
+      args:
+        creates: /usr/bin/docker
+
+    # Check if Node.js is installed
+    - name: Check if Node.js is installed
+      command: node --version
+      register: node_check
+      ignore_errors: yes
+
+    # Add NodeSource repository for LTS version
+    - name: Add NodeSource repository for LTS version
+      shell: curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      when: node_check.rc != 0
+
+    # Install Node.js and npm
+    - name: Install Node.js and npm
+      apt:
+        name: 
+          - nodejs
+        state: present
+      when: node_check.rc != 0
+
+    # Install Yarn globally
+    - name: Install Yarn
+      apt:
+        name: yarn
+        state: present
+
+    # Verify Docker installation
+    - name: Verify Docker installation
+      command: docker --version
+      register: docker_version
+      when: docker_version is not defined
+    - debug:
+        msg: "Docker version: {{ docker_version.stdout }}"
+
+    # Verify Docker Compose installation
+    - name: Verify Docker Compose installation
+      command: docker compose version
+      register: docker_compose_version
+      when: docker_compose_version is not defined
+    - debug:
+        msg: "Docker Compose version: {{ docker_compose_version.stdout }}"
+
+    # Verify Node.js installation
+    - name: Verify Node.js installation
+      command: node --version
+      register: node_version
+      when: node_version is not defined
+    - debug:
+        msg: "Node.js version: {{ node_version.stdout }}"
+
+    # Verify npm installation
+    - name: Verify npm installation
+      command: npm --version
+      register: npm_version
+      when: npm_version is not defined
+    - debug:
+        msg: "npm version: {{ npm_version.stdout }}"
+
+    # Verify Yarn installation
+    - name: Verify Yarn installation
+      command: yarn --version
+      register: yarn_version
+    - debug:
+        msg: "Yarn version: {{ yarn_version.stdout }}"
+
+    # Ensure the /app directory exists
+    # - name: Create /app directory
+    #   file:
+    #     path: /app
+    #     state: directory
+
+    # Copy application code to /app
+    - name: Copy application code to ~/app
+      copy:
+        src: .
+        dest: ~/app
+        remote_src: no
+
+    # Check if node_modules directory exists
+    # - name: Check if node_modules directory exists
+    #   stat:
+    #     path: /app/node_modules
+    #   register: node_modules_stat
+
+    # Install application dependencies using Yarn
+    # - name: Install application dependencies
+    #   command: yarn install --production
+    #   args:
+    #     chdir: /app
+    #   when: not node_modules_stat.stat.exists
+
+    # Check if dist directory exists
+    # - name: Check if dist directory exists
+    #   stat:
+    #     path: /app/dist
+    #   register: dist_stat
+
+    # Build the application using Yarn
+    # - name: Build the application
+    #   command: yarn build
+    #   args:
+    #     chdir: /app
+    #   when: not dist_stat.stat.exists
+
+    # Build the Docker image for the frontend
+    # - name: Build Docker image for frontend
+    #   command: docker build -t frontend-app .
+    #   args:
+    #     chdir: /app
+    #   when: not dist_stat.stat.exists
+
+    # # Run the frontend container
+    # - name: Run frontend container
+    #   docker_container:
+    #     name: frontend-container
+    #     image: frontend-app
+    #     state: started
+    #     ports:
+    #       - "3000:80"
+    #     volumes:
+    #       - /app:/app
+    #     restart_policy: always
