@@ -12,10 +12,13 @@ Vagrant.configure("2") do |config|
   config.vm.network "forwarded_port", guest: 443, host: 8443, auto_correct: true # HTTPS
   config.vm.network "forwarded_port", guest: 8000, host: 8000, auto_correct: true # Django Dev Server
 
+  # Disable the default /vagrant synced folder
+  # config.vm.synced_folder ".", "/vagrant", disabled: true
+
   # Configure VM resources
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = "2048"
-    vb.cpus = 2
+    vb.memory = "4096" # 4GB
+    vb.cpus = 2      # 2 CPUs
   end
   config.vm.provider "virtualbox" do |vb|
     vb.customize ["setextradata", :id, "VBoxInternal2/SharedFoldersEnableSymlinksCreate/v-root", "1"]
@@ -25,4 +28,9 @@ Vagrant.configure("2") do |config|
   config.vm.provision "ansible_local" do |ansible|
     ansible.playbook = "install_dependencies.yml"
   end
+
+  config.vm.provision "shell", inline: <<-SHELL
+    echo "export GITHUB_TOKEN=#{ENV['GITHUB_TOKEN']}" >> /etc/profile.d/github_token.sh
+    chmod +x /etc/profile.d/github_token.sh
+  SHELL
 end

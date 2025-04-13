@@ -42,11 +42,15 @@
         state: present
       when: node_check.rc != 0
 
+    # Remove existing Yarn installation
+    - name: Remove existing Yarn installation
+      file:
+        path: /usr/bin/yarn
+        state: absent
+
     # Install Yarn globally
-    - name: Install Yarn
-      apt:
-        name: yarn
-        state: present
+    - name: Install & Update Yarn
+      shell: npm install -g yarn
 
     # Verify Docker installation
     - name: Verify Docker installation
@@ -87,18 +91,11 @@
     - debug:
         msg: "Yarn version: {{ yarn_version.stdout }}"
 
-    # Ensure the /app directory exists
-    # - name: Create /app directory
-    #   file:
-    #     path: /app
-    #     state: directory
-
-    # Copy application code to /app
-    - name: Copy application code to ~/app
-      copy:
-        src: .
-        dest: ~/app
-        remote_src: no
+    - name: Clone from GitHub project application code to ~/app
+      git:
+        repo: "https://{{ lookup('env', 'GITHUB_TOKEN') }}@github.com/vijaygone/django-react-ecommerce.git"
+        dest: "~/app"
+        version: "master"  # Replace with the desired branch or tag
 
     # Check if node_modules directory exists
     # - name: Check if node_modules directory exists
