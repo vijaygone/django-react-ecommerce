@@ -5,9 +5,6 @@ Vagrant.configure("2") do |config|
   # Set up the virtual machine with a static IP
   config.vm.network "private_network", ip: "192.168.56.10"
 
-  # Set the hostname for the VM
-  config.vm.hostname = "WebServer"
-
   # Forward common ports
   config.vm.network "forwarded_port", guest: 3000, host: 3000, auto_correct: true # React Dev Server
   config.vm.network "forwarded_port", guest: 5000, host: 5000, auto_correct: true # Flask Dev Server
