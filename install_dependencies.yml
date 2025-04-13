@@ -141,6 +141,8 @@
       command: yarn build
       args:
         chdir: /home/vagrant/app
+      environment:
+        NODE_OPTIONS: "--openssl-legacy-provider"
       become: yes
       become_user: vagrant
 
