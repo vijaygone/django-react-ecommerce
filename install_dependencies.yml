@@ -146,9 +146,17 @@
       become: yes
       become_user: vagrant
 
+    # Stop existing Docker Compose services
+    - name: Stop existing Docker Compose services
+      command: docker compose down
+      args:
+        chdir: /home/vagrant/app
+      ignore_errors: yes
+      become: yes
+
     # Run Docker Compose to start the services
     - name: Start services using Docker Compose
-      command: docker-compose up -d
+      command: docker compose up -d
       args:
         chdir: /home/vagrant/app
       become: yes
