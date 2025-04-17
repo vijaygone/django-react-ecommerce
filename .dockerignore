@@ -5,3 +5,5 @@ docker-compose.yml
 .dockerignore
 .git
 .gitignore
+.vscode
+.vagrant

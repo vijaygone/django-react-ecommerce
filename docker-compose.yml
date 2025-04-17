@@ -7,5 +7,18 @@ services:
       - "3000:80" # Map port 3000 on the host to port 80 in the container
     volumes:
       - ./build:/usr/share/nginx/html # Mount the build directory to Nginx's HTML directory
+      - ./static-volume:/usr/share/nginx/html/static
     stdin_open: true
     tty: true
+    depends_on:
+      - backend # Add backend as a dependency
+
+  backend:
+    build:
+      context: . # Use the current directory as the build context
+      dockerfile: Dockerfile_backend # Specify the backend Dockerfile
+    ports:
+      - "8000:8000" # Map port 8000 on the host to port 8000 in the container
+    volumes:
+      - ./logs:/var/log/django # Map the host's ./logs directory to /var/log/django in the container
+      - ./static-volume:/app/static # Map the static volume to /app/static in the container
